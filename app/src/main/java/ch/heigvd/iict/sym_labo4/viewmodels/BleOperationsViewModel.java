@@ -13,6 +13,8 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import java.util.UUID;
+
 import no.nordicsemi.android.ble.BleManager;
 import no.nordicsemi.android.ble.BleManagerCallbacks;
 
@@ -162,6 +164,23 @@ public class BleOperationsViewModel extends AndroidViewModel {
                 mConnection = gatt; //trick to force disconnection
                 Log.d(TAG, "isRequiredServiceSupported - discovered services:");
 
+
+                timeService = mConnection.getService(UUID.fromString("00001805-0000-1000-8000-00805f9b34fb"));
+                currentTimeChar = timeService.getCharacteristic(UUID.fromString("00002A2B-0000-1000-8000-00805f9b34fb"));
+
+                byte[] value = new byte[10];
+                value[0] = (byte) (0xE3);
+                value[1] = (byte) (0x07);
+
+                value[2] = (byte) (12);
+                value[3] = (byte) (13);
+                value[4] = (byte) (11);
+                value[5] = (byte) (78);
+
+                currentTimeChar.setValue(value);
+
+                mConnection.writeCharacteristic(currentTimeChar);
+
                 /* TODO
                     - Nous devons vérifier ici que le périphérique auquel on vient de se connecter possède
                       bien tous les services et les caractéristiques attendues, on vérifiera aussi que les
@@ -198,6 +217,7 @@ public class BleOperationsViewModel extends AndroidViewModel {
         };
 
         public boolean readTemperature() {
+
             /* TODO on peut effectuer ici la lecture de la caractéristique température
                 la valeur récupérée sera envoyée à l'activité en utilisant le mécanisme
                 des MutableLiveData
