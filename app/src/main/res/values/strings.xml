@@ -19,4 +19,8 @@
     <string name="ble_sendvalue_send">Send</string>
     <string name="ble_not_supported">Bluetooth LE is not available</string>
 
+    <string name="ble_read_temperature">Read temperature</string>
+    <string name="ble_set_temperature">Set temperature</string>
+    <string name="ble_set_time">Set time</string>
+
 </resources>
