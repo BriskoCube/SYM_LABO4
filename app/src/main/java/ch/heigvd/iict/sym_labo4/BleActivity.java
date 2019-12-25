@@ -57,6 +57,8 @@ public class BleActivity extends BaseTemplateActivity {
     private ListView scanResults = null;
     private TextView emptyScanResults = null;
 
+    private TextView temperatureView = null;
+
     //menu elements
     private MenuItem scanMenuBtn = null;
     private MenuItem disconnectMenuBtn = null;
@@ -85,6 +87,8 @@ public class BleActivity extends BaseTemplateActivity {
         this.scanResults = findViewById(R.id.ble_scanresults);
         this.emptyScanResults = findViewById(R.id.ble_scanresults_empty);
 
+        this.temperatureView = findViewById(R.id.temparature);
+
         //manage scanned item
         this.scanResultsAdapter = new ResultsAdapter(this);
         this.scanResults.setAdapter(this.scanResultsAdapter);
@@ -109,6 +113,12 @@ public class BleActivity extends BaseTemplateActivity {
         this.bleViewModel.isConnected().observe(this, (isConnected) -> {
             updateGui();
         });
+
+        //temp event
+        this.bleViewModel.temperature().observe(this, (temperature) -> {
+            updateGui();
+        });
+
     }
 
     @Override
@@ -156,8 +166,13 @@ public class BleActivity extends BaseTemplateActivity {
     private void updateGui() {
         Boolean isConnected = this.bleViewModel.isConnected().getValue();
         if(isConnected != null && isConnected) {
+            Float temperature = this.bleViewModel.temperature().getValue();
+
+
             this.scanPanel.setVisibility(View.GONE);
             this.operationPanel.setVisibility(View.VISIBLE);
+
+            this.temperatureView.setText(temperature != null ? temperature.toString() : "-");
 
             if(this.scanMenuBtn != null && this.disconnectMenuBtn != null) {
                 this.scanMenuBtn.setVisible(false);
@@ -232,4 +247,9 @@ public class BleActivity extends BaseTemplateActivity {
         }
     };
 
+    public void readTemperatureClicked(View view) {
+        bleViewModel.readTemperature();
+
+
+    }
 }

@@ -41,6 +41,9 @@ public class BleOperationsViewModel extends AndroidViewModel {
     public LiveData<Boolean> isConnected() {
         return mIsConnected;
     }
+    public LiveData<Float> temperature() {
+        return mTemperature;
+    }
 
     //references to the Services and Characteristics of the SYM Pixl
     private BluetoothGattService timeService = null, symService = null;
