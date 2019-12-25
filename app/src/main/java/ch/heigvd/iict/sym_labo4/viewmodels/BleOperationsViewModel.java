@@ -13,10 +13,13 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import java.util.Calendar;
+import java.util.Date;
 import java.util.UUID;
 
 import no.nordicsemi.android.ble.BleManager;
 import no.nordicsemi.android.ble.BleManagerCallbacks;
+import no.nordicsemi.android.ble.data.Data;
 
 public class BleOperationsViewModel extends AndroidViewModel {
 
@@ -27,6 +30,7 @@ public class BleOperationsViewModel extends AndroidViewModel {
 
     //live data - observer
     private final MutableLiveData<Boolean> mIsConnected = new MutableLiveData<>();
+    private final MutableLiveData<Float> mTemperature = new MutableLiveData<>();
     public LiveData<Boolean> isConnected() {
         return mIsConnected;
     }
@@ -74,6 +78,12 @@ public class BleOperationsViewModel extends AndroidViewModel {
         if(!isConnected().getValue() || temperatureChar == null) return false;
         return ble.readTemperature();
     }
+
+    public boolean writeTime() {
+        if(!isConnected().getValue() || currentTimeChar == null) return false;
+        return ble.writeTime();
+    }
+
 
     private BleManagerCallbacks bleManagerCallbacks = new BleManagerCallbacks() {
         @Override
@@ -166,20 +176,21 @@ public class BleOperationsViewModel extends AndroidViewModel {
 
 
                 timeService = mConnection.getService(UUID.fromString("00001805-0000-1000-8000-00805f9b34fb"));
+                symService = mConnection.getService(UUID.fromString("3c0a1000-281d-4b48-b2a7-f15579a1c38f"));
+
+
+                if(timeService == null || symService == null)
+                    return false;
+
                 currentTimeChar = timeService.getCharacteristic(UUID.fromString("00002A2B-0000-1000-8000-00805f9b34fb"));
 
-                byte[] value = new byte[10];
-                value[0] = (byte) (0xE3);
-                value[1] = (byte) (0x07);
+                integerChar = symService.getCharacteristic(UUID.fromString("3c0a1001-281d-4b48-b2a7-f15579a1c38f"));
+                buttonClickChar = symService.getCharacteristic(UUID.fromString("3c0a1003-281d-4b48-b2a7-f15579a1c38f"));
+                temperatureChar = symService.getCharacteristic(UUID.fromString("3c0a1002-281d-4b48-b2a7-f15579a1c38f"));
 
-                value[2] = (byte) (12);
-                value[3] = (byte) (13);
-                value[4] = (byte) (11);
-                value[5] = (byte) (78);
 
-                currentTimeChar.setValue(value);
-
-                mConnection.writeCharacteristic(currentTimeChar);
+                return currentTimeChar != null && integerChar != null
+                        && buttonClickChar != null && temperatureChar != null;
 
                 /* TODO
                     - Nous devons vérifier ici que le périphérique auquel on vient de se connecter possède
@@ -190,7 +201,6 @@ public class BleOperationsViewModel extends AndroidViewModel {
                  */
 
                 //FIXME si tout est OK, on retourne true, sinon la librairie appelera la méthode onDeviceNotSupported()
-                return false;
             }
 
             @Override
@@ -201,6 +211,9 @@ public class BleOperationsViewModel extends AndroidViewModel {
                     Dans notre cas il s'agit de s'enregistrer pour recevoir les notifications proposées par certaines
                     caractéristiques, on en profitera aussi pour mettre en place les callbacks correspondants.
                  */
+
+
+
             }
 
             @Override
@@ -214,9 +227,42 @@ public class BleOperationsViewModel extends AndroidViewModel {
                 temperatureChar = null;
                 buttonClickChar = null;
             }
+
         };
 
+        public boolean writeTime(){
+            writeCharacteristic(currentTimeChar, getCurrentBLETime()).enqueue();
+
+            return false;
+        }
+
+        private byte[] getCurrentBLETime(){
+
+            Calendar now = Calendar.getInstance();
+
+            int date = now.get(Calendar.YEAR);
+
+            byte[] BLETime = new byte[10];
+            BLETime[0] = (byte) (date); // 0xE3
+            BLETime[1] = (byte) (date >> 8); // 0x07
+
+            BLETime[2] = (byte) (now.get(Calendar.MONTH) + 1);
+            BLETime[3] = (byte) (now.get(Calendar.DAY_OF_MONTH));
+            BLETime[4] = (byte) (now.get(Calendar.HOUR_OF_DAY));
+            BLETime[5] = (byte) (now.get(Calendar.MINUTE));
+            BLETime[6] = (byte) (now.get(Calendar.SECOND));
+            BLETime[7] = (byte) (now.get(Calendar.DAY_OF_WEEK));
+
+            return BLETime;
+        }
+
         public boolean readTemperature() {
+
+            readCharacteristic(temperatureChar).with((device, data) -> {
+                int rawTemp = data.getIntValue(Data.FORMAT_UINT16, 0);
+
+                mTemperature.setValue(rawTemp / 10f);
+            }).enqueue();
 
             /* TODO on peut effectuer ici la lecture de la caractéristique température
                 la valeur récupérée sera envoyée à l'activité en utilisant le mécanisme
@@ -225,5 +271,6 @@ public class BleOperationsViewModel extends AndroidViewModel {
             */
             return false; //FIXME
         }
+
     }
 }
