@@ -36,6 +36,8 @@ import ch.heigvd.iict.sym_labo4.viewmodels.BleOperationsViewModel;
  * Project: Labo4
  * Created by fabien.dutoit on 09.08.2019
  * (C) 2019 - HEIG-VD, IICT
+ *
+ * Nathan Séville & Julien Quartier
  */
 
 public class BleActivity extends BaseTemplateActivity {

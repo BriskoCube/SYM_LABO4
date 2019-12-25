@@ -8,6 +8,8 @@ import android.view.MenuItem;
  * Project: Labo3
  * Created by fabien.dutoit on 01.11.2016
  * (C) 2016 - HEIG-VD, IICT
+ *
+ * Nathan Séville & Julien Quartier
  */
 
 public abstract class BaseTemplateActivity extends AppCompatActivity {

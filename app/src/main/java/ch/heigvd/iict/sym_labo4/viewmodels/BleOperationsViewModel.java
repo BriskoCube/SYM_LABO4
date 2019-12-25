@@ -1,3 +1,10 @@
+/**
+ * Julien Quartier & Nathan Séville
+ *
+ * Date: 20.12.2019
+ * Description: Ble View Model
+ */
+
 package ch.heigvd.iict.sym_labo4.viewmodels;
 
 import android.app.Application;
