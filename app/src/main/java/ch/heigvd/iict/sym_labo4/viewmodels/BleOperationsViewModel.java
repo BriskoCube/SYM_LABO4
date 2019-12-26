@@ -38,11 +38,20 @@ public class BleOperationsViewModel extends AndroidViewModel {
     //live data - observer
     private final MutableLiveData<Boolean> mIsConnected = new MutableLiveData<>();
     private final MutableLiveData<Float> mTemperature = new MutableLiveData<>();
+    private final MutableLiveData<Integer> mButtonClickCount = new MutableLiveData<>();
+    private final MutableLiveData<Calendar> mDate = new MutableLiveData<>();
+
     public LiveData<Boolean> isConnected() {
         return mIsConnected;
     }
     public LiveData<Float> temperature() {
         return mTemperature;
+    }
+    public LiveData<Integer> buttonClickCount() {
+        return mButtonClickCount;
+    }
+    public LiveData<Calendar> date() {
+        return mDate;
     }
 
     //references to the Services and Characteristics of the SYM Pixl
@@ -92,6 +101,12 @@ public class BleOperationsViewModel extends AndroidViewModel {
     public boolean writeTime() {
         if(!isConnected().getValue() || currentTimeChar == null) return false;
         return ble.writeTime();
+    }
+
+
+    public boolean writeInteger(int value) {
+        if(!isConnected().getValue() || integerChar == null) return false;
+        return ble.writeInteger(value);
     }
 
 
@@ -199,6 +214,22 @@ public class BleOperationsViewModel extends AndroidViewModel {
                 temperatureChar = symService.getCharacteristic(UUID.fromString("3c0a1002-281d-4b48-b2a7-f15579a1c38f"));
 
 
+
+                enableNotifications(buttonClickChar).enqueue();
+
+                setNotificationCallback(buttonClickChar).with((device, data) -> {
+                    mButtonClickCount.setValue(data.getIntValue(Data.FORMAT_UINT8, 0));
+                });
+
+
+                enableNotifications(currentTimeChar).enqueue();
+
+                setNotificationCallback(currentTimeChar).with((device, data) -> {
+                    mDate.setValue(dataToCalendar(data));
+                });
+
+
+
                 return currentTimeChar != null && integerChar != null
                         && buttonClickChar != null && temperatureChar != null;
 
@@ -246,15 +277,26 @@ public class BleOperationsViewModel extends AndroidViewModel {
             return false;
         }
 
+        public boolean writeInteger(int value){
+            writeCharacteristic(integerChar, new byte[]{
+                    (byte)value,
+                    (byte)(value >> 8),
+                    (byte)(value >> 16),
+                    (byte)(value >> 24)
+            }).enqueue();
+
+            return false;
+        }
+
         private byte[] getCurrentBLETime(){
 
             Calendar now = Calendar.getInstance();
 
-            int date = now.get(Calendar.YEAR);
+            int year = now.get(Calendar.YEAR);
 
             byte[] BLETime = new byte[10];
-            BLETime[0] = (byte) (date); // 0xE3
-            BLETime[1] = (byte) (date >> 8); // 0x07
+            BLETime[0] = (byte) (year); // 0xE3
+            BLETime[1] = (byte) (year >> 8); // 0x07
 
             BLETime[2] = (byte) (now.get(Calendar.MONTH) + 1);
             BLETime[3] = (byte) (now.get(Calendar.DAY_OF_MONTH));
@@ -264,6 +306,19 @@ public class BleOperationsViewModel extends AndroidViewModel {
             BLETime[7] = (byte) (now.get(Calendar.DAY_OF_WEEK));
 
             return BLETime;
+        }
+
+        private Calendar dataToCalendar(Data data){
+            Calendar calendar = Calendar.getInstance();
+            calendar.set(Calendar.YEAR, data.getIntValue(Data.FORMAT_UINT16, 0));
+            calendar.set(Calendar.MONTH, data.getIntValue(Data.FORMAT_UINT8, 2) - 1);
+            calendar.set(Calendar.DAY_OF_MONTH, data.getIntValue(Data.FORMAT_UINT8, 3));
+            calendar.set(Calendar.HOUR_OF_DAY, data.getIntValue(Data.FORMAT_UINT8, 4));
+            calendar.set(Calendar.MINUTE, data.getIntValue(Data.FORMAT_UINT8, 5));
+            calendar.set(Calendar.SECOND, data.getIntValue(Data.FORMAT_UINT8, 6));
+            calendar.set(Calendar.DAY_OF_WEEK, data.getIntValue(Data.FORMAT_UINT8, 7));
+
+            return calendar;
         }
 
         public boolean readTemperature() {

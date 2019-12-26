@@ -17,14 +17,15 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.LinearLayout;
+import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.lifecycle.ViewModelProviders;
 
+import java.util.Calendar;
+import java.util.Date;
 import java.util.UUID;
 import java.util.Vector;
 
@@ -58,6 +59,10 @@ public class BleActivity extends BaseTemplateActivity {
     private TextView emptyScanResults = null;
 
     private TextView temperatureView = null;
+    private TextView buttonClickedCountView = null;
+    private TextView currentDate = null;
+
+    private EditText integerInput = null;
 
     //menu elements
     private MenuItem scanMenuBtn = null;
@@ -88,6 +93,10 @@ public class BleActivity extends BaseTemplateActivity {
         this.emptyScanResults = findViewById(R.id.ble_scanresults_empty);
 
         this.temperatureView = findViewById(R.id.temparature);
+        this.buttonClickedCountView = findViewById(R.id.button_click_count);
+        this.currentDate = findViewById(R.id.current_time);
+
+        this.integerInput = findViewById(R.id.new_set_integer);
 
         //manage scanned item
         this.scanResultsAdapter = new ResultsAdapter(this);
@@ -118,6 +127,17 @@ public class BleActivity extends BaseTemplateActivity {
         this.bleViewModel.temperature().observe(this, (temperature) -> {
             updateGui();
         });
+
+        //button click count event
+        this.bleViewModel.buttonClickCount().observe(this, (buttonClickCount) -> {
+            updateGui();
+        });
+
+        //Date event
+        this.bleViewModel.date().observe(this, (date) -> {
+            updateGui();
+        });
+
 
     }
 
@@ -167,12 +187,23 @@ public class BleActivity extends BaseTemplateActivity {
         Boolean isConnected = this.bleViewModel.isConnected().getValue();
         if(isConnected != null && isConnected) {
             Float temperature = this.bleViewModel.temperature().getValue();
+            Integer buttonClickCount = this.bleViewModel.buttonClickCount().getValue();
+            Calendar calendar = this.bleViewModel.date().getValue();
 
 
             this.scanPanel.setVisibility(View.GONE);
             this.operationPanel.setVisibility(View.VISIBLE);
 
             this.temperatureView.setText(temperature != null ? temperature.toString() : "-");
+
+            this.buttonClickedCountView.setText(buttonClickCount != null ? buttonClickCount.toString() : "-");
+
+
+
+            if(calendar !=null){
+                Date date = calendar.getTime();
+                this.currentDate.setText(date.toString());
+            }
 
             if(this.scanMenuBtn != null && this.disconnectMenuBtn != null) {
                 this.scanMenuBtn.setVisible(false);
@@ -251,5 +282,21 @@ public class BleActivity extends BaseTemplateActivity {
         bleViewModel.readTemperature();
 
 
+    }
+
+    public void setIntegerClicked(View view) {
+        try {
+            String raw = this.integerInput.getText().toString();
+            Integer value = Integer.parseInt(raw);
+
+            bleViewModel.writeInteger(value);
+        } catch (RuntimeException ex) {
+            Toast.makeText(this, "Not an integer", Toast.LENGTH_SHORT).show();
+
+        }
+    }
+
+    public void updateDateClicked(View view) {
+        bleViewModel.writeTime();
     }
 }
