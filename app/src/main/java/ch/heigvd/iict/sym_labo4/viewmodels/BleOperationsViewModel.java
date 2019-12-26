@@ -295,8 +295,8 @@ public class BleOperationsViewModel extends AndroidViewModel {
             int year = now.get(Calendar.YEAR);
 
             byte[] BLETime = new byte[10];
-            BLETime[0] = (byte) (year); // 0xE3
-            BLETime[1] = (byte) (year >> 8); // 0x07
+            BLETime[0] = (byte) (year);
+            BLETime[1] = (byte) (year >> 8);
 
             BLETime[2] = (byte) (now.get(Calendar.MONTH) + 1);
             BLETime[3] = (byte) (now.get(Calendar.DAY_OF_MONTH));
