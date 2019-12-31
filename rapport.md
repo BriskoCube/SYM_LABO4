@@ -5,7 +5,7 @@
 >
 >    Une fois la manipulation effectuée, vous constaterez que les animations de la flèche ne sont pas fluides, il va y avoir un tremblement plus ou moins important même si le téléphone ne bouge pas. Veuillez expliquer quelle est la cause la plus probable de ce tremblement et donner une manière (sans forcément l’implémenter) d’y remédier.
 
-
+Il y a de petit changement de valeurs relevés par les *sensors* même si le téléphone ne bouge pas ce qui a pour effet de faire trembler la boussole comme on change l'orientation de la boussole à chaque changement d'un *sensor*. Une solution pour régler ce problème est de vérifier si les changements relevés sont suffisamment différent des précédents pour changer l'orientation de la boussole.
 
 > 2. Questions
 >    - La caractéristique permettant de lire la température retourne la valeur en degrés Celsius, multipliée par 10, sous la forme d’un entier non-signé de 16 bits. Quel est l’intérêt de procéder de la sorte ? Pourquoi ne pas échanger un nombre à virgule flottante de type float par exemple ?
